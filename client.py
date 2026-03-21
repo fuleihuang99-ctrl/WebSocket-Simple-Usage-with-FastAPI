@@ -1,13 +1,12 @@
 import asyncio
 import websockets
 
-async def send_file():
-    uri = "ws://localhost:8000"
+async def test_client():
+    uri = "ws://127.0.0.1:8000/ws"
     async with websockets.connect(uri) as ws:
-        with open("image.png", "rb") as f:  #open file in binary mode
-            file_bytes = f.read()
-        await ws.send(file_bytes)  # send bytes
+        await ws.send("Hello, Server!")
+        #await ws.send("Quit, Server now!")
         response = await ws.recv()
-        print("Server response:", response)
+        print(f"Server response: {response}")
 
-asyncio.run(send_file())
+asyncio.run(test_client())

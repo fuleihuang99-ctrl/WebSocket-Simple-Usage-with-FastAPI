@@ -1,24 +1,25 @@
-import asyncio # Python's built-in asynchronous I/O library
-import websockets # Library for creating WebSocket servers and clients
+from fastapi import FastAPI, WebSocket
 
-# async def handler(connection):
-#     print("Client connected")
+app = FastAPI()
 
-#     message = await connection.recv()
-#     print("Received from client:", message)
-#     await connection.send("Hello client!")
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
 
-async def file_handler(ws):
-    print("Client connected, waiting for file...")
-    file_bytes = await ws.recv()  # receive bytes
-    with open("received_file.png", "wb") as f:
-        f.write(file_bytes)
-    print("File received and saved!")
-    await ws.send("File received successfully!")
+    try:
+        while True:
+            data = await websocket.receive_text()
 
-async def main():
-    async with websockets.serve(file_handler, "localhost", 8000):
-        print("Server running on ws://localhost:8000")
-        await asyncio.sleep(50)  # keep server alive
+            if "bye" in data or "quit" in data:
+                await websocket.send_text("Goodbye!")
+                await websocket.close(code=1000, reason="Client requested close")
+                break
+            
+            await websocket.send_text(f"Message received: {data}")
 
-asyncio.run(main())
+    except WebSocketDisconnect:
+        print(f"WebSocket disconnected")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
